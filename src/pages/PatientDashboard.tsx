@@ -31,6 +31,7 @@ type WaterIntake = {
 const PatientDashboard: React.FC = () => {
   const { profile, patientRecord } = useAuth();
   const [medications, setMedications] = useState<Medication[]>([]);
+  const [takenMedIds, setTakenMedIds] = useState<Set<string>>(new Set());
   const [waterIntake, setWaterIntake] = useState<WaterIntake | null>(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
   const [emergencyDialogOpen, setEmergencyDialogOpen] = useState(false);
@@ -44,15 +45,22 @@ const PatientDashboard: React.FC = () => {
   const fetchData = useCallback(async () => {
     if (!patientRecord) return;
 
-    const [medsRes, waterRes, apptsRes] = await Promise.all([
+    const [medsRes, waterRes, apptsRes, logsRes] = await Promise.all([
       supabase.from('medications').select('*').eq('patient_id', patientRecord.id).eq('active', true),
       supabase.from('water_intake').select('*').eq('patient_id', patientRecord.id).eq('date', today).maybeSingle(),
       supabase.from('appointments').select('*').eq('patient_id', patientRecord.id).gte('date', today).order('date').limit(5),
+      supabase.from('medication_logs').select('medication_id')
+        .eq('patient_id', patientRecord.id).eq('status', 'taken')
+        .gte('scheduled_time', `${today}T00:00:00`).lte('scheduled_time', `${today}T23:59:59`),
     ]);
 
     setMedications((medsRes.data as Medication[]) || []);
     setWaterIntake(waterRes.data as WaterIntake | null);
     setUpcomingAppointments(apptsRes.data || []);
+
+    const taken = new Set<string>();
+    logsRes.data?.forEach((log: any) => taken.add(log.medication_id));
+    setTakenMedIds(taken);
   }, [patientRecord, today]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
