@@ -16,10 +16,10 @@ serve(async (req) => {
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    const { patient_id, patient_name, location_lat, location_lng } = await req.json();
+    const { patient_id, patient_name, type, medication_name } = await req.json();
 
-    if (!patient_id || !patient_name) {
-      return new Response(JSON.stringify({ error: 'Missing patient info' }), {
+    if (!patient_id || !type) {
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
@@ -34,35 +34,40 @@ serve(async (req) => {
       });
     }
 
-    const mapsLink = location_lat && location_lng
-      ? `https://maps.google.com/?q=${location_lat},${location_lng}`
-      : 'Location unavailable';
+    let title = '';
+    let message = '';
 
-    // Create emergency notification for caregiver
+    switch (type) {
+      case 'medication_taken':
+        title = '💊 Medication Taken';
+        message = `${patient_name} has taken their medication: ${medication_name}`;
+        break;
+      case 'medication_reminder':
+        title = '💊 Medication Reminder';
+        message = `It's time for ${patient_name} to take ${medication_name}`;
+        break;
+      case 'appointment_reminder':
+        title = '📅 Appointment Reminder';
+        message = `${patient_name} has an upcoming appointment`;
+        break;
+      default:
+        title = '🔔 Notification';
+        message = `Update from ${patient_name}`;
+    }
+
+    // Create in-app notification for caregiver
     await supabase.from('notifications').insert({
       user_id: patient.caregiver_id,
-      title: '🚨 EMERGENCY ALERT',
-      message: `${patient_name} has triggered an emergency alert! Location: ${mapsLink}`,
-      type: 'emergency',
+      title,
+      message,
+      type: type === 'medication_taken' ? 'medication' : type,
     });
 
-    // Update alert as caregiver_notified
-    await supabase
-      .from('emergency_alerts')
-      .update({ caregiver_notified: true })
-      .eq('patient_id', patient_id)
-      .eq('status', 'active')
-      .order('timestamp', { ascending: false })
-      .limit(1);
-
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: 'Caregiver notified via in-app notification and browser alerts.'
-    }), {
+    return new Response(JSON.stringify({ success: true, message: 'Notification sent' }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
-    console.error('Emergency alert error:', err);
+    console.error('Notification error:', err);
     return new Response(JSON.stringify({ error: err.message }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
