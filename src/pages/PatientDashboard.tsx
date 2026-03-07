@@ -197,17 +197,26 @@ const PatientDashboard: React.FC = () => {
               <p className="text-muted-foreground text-sm">No medications scheduled</p>
             ) : (
               <div className="space-y-3">
-                {medications.map(med => (
-                  <div key={med.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                    <div>
-                      <p className="font-medium">{med.name} <span className="text-muted-foreground">{med.dosage}</span></p>
-                      <p className="text-xs text-muted-foreground">{med.times_array?.join(', ')}</p>
+                {medications.map(med => {
+                  const isTaken = takenMedIds.has(med.id);
+                  return (
+                    <div key={med.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div>
+                        <p className="font-medium">{med.name} <span className="text-muted-foreground">{med.dosage}</span></p>
+                        <p className="text-xs text-muted-foreground">{med.times_array?.join(', ')}</p>
+                      </div>
+                      <Button
+                        variant={isTaken ? 'outline' : 'default'}
+                        size="sm"
+                        disabled={isTaken}
+                        onClick={() => markMedicationTaken(med.id, med.name)}
+                        className={isTaken ? 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 cursor-not-allowed' : ''}
+                      >
+                        <Check className="w-4 h-4 mr-1" /> {isTaken ? 'Taken ✓' : 'Taken'}
+                      </Button>
                     </div>
-                    <Button variant="success" size="sm" onClick={() => markMedicationTaken(med.id)}>
-                      <Check className="w-4 h-4 mr-1" /> Taken
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
