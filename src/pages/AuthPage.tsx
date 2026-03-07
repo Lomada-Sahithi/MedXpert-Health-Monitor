@@ -42,8 +42,8 @@ const AuthPage: React.FC = () => {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 mb-4">
             <Heart className="w-8 h-8 text-primary" />
           </div>
-          <h1 className="text-3xl font-heading font-bold text-foreground">HealthGuard</h1>
-          <p className="text-muted-foreground mt-2">Your complete health monitoring companion</p>
+          <h1 className="text-3xl font-heading font-bold text-foreground">MedXpert</h1>
+          <p className="text-muted-foreground mt-2">Your smart health monitoring companion</p>
         </div>
 
         <Card className="card-elevated">
