@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Users, Pill, Calendar, AlertTriangle, Plus, Search } from 'lucide-react';
+import { Users, Pill, Calendar, AlertTriangle, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -30,7 +30,7 @@ const CaregiverDashboard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [patients, setPatients] = useState<Patient[]>([]);
-  const [patientIdInput, setPatientIdInput] = useState('');
+  const [patientEmailInput, setPatientEmailInput] = useState('');
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [addingPatient, setAddingPatient] = useState(false);
@@ -50,24 +50,20 @@ const CaregiverDashboard: React.FC = () => {
   }, [user]);
 
   const handleAddPatient = async () => {
-    if (!patientIdInput.trim() || !user) return;
+    if (!patientEmailInput.trim() || !user) return;
     setAddingPatient(true);
 
-    // Find patient by unique ID - need to use a different approach since we can't see unassigned patients
-    // We'll use an RPC or direct update
-    const { data, error } = await supabase
-      .from('patients')
-      .update({ caregiver_id: user.id })
-      .eq('patient_id_unique', patientIdInput.trim().toUpperCase())
-      .is('caregiver_id', null)
-      .select()
-      .maybeSingle();
+    const { data, error } = await supabase.rpc('link_patient_by_email', {
+      _caregiver_id: user.id,
+      _patient_email: patientEmailInput.trim().toLowerCase(),
+    });
 
-    if (error || !data) {
-      toast.error('Patient not found or already assigned to a caregiver');
+    const result = data as any;
+    if (error || !result?.success) {
+      toast.error(result?.error || error?.message || 'Failed to add patient');
     } else {
-      toast.success(`Patient ${data.name} added successfully!`);
-      setPatientIdInput('');
+      toast.success(`Patient ${result.patient_name} added successfully!`);
+      setPatientEmailInput('');
       setAddDialogOpen(false);
       fetchPatients();
     }
@@ -91,17 +87,17 @@ const CaregiverDashboard: React.FC = () => {
                 <DialogTitle className="font-heading">Add a Patient</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">Enter the patient's unique ID (format: PAT-XXXXXX) to connect with them.</p>
+                <p className="text-sm text-muted-foreground">Enter the patient's registered email address to connect with them.</p>
                 <div className="space-y-2">
-                  <Label>Patient ID</Label>
+                  <Label>Patient Email</Label>
                   <Input
-                    value={patientIdInput}
-                    onChange={e => setPatientIdInput(e.target.value)}
-                    placeholder="PAT-XXXXXX"
-                    className="uppercase"
+                    type="email"
+                    value={patientEmailInput}
+                    onChange={e => setPatientEmailInput(e.target.value)}
+                    placeholder="patient@example.com"
                   />
                 </div>
-                <Button onClick={handleAddPatient} disabled={addingPatient || !patientIdInput.trim()} className="w-full">
+                <Button onClick={handleAddPatient} disabled={addingPatient || !patientEmailInput.trim()} className="w-full">
                   {addingPatient ? 'Adding...' : 'Add Patient'}
                 </Button>
               </div>
@@ -122,7 +118,7 @@ const CaregiverDashboard: React.FC = () => {
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <Users className="w-12 h-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-heading font-semibold">No Patients Yet</h3>
-              <p className="text-muted-foreground mt-2 max-w-sm">Add a patient by entering their unique Patient ID. Patients can find their ID on their dashboard.</p>
+              <p className="text-muted-foreground mt-2 max-w-sm">Add a patient by entering their registered email address.</p>
             </CardContent>
           </Card>
         ) : (
