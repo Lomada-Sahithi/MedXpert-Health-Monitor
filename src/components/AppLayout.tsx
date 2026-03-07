@@ -25,7 +25,7 @@ const AppLayout: React.FC<{ children: React.ReactNode; navItems: NavItem[] }> = 
             </button>
             <div className="flex items-center gap-2">
               <Heart className="w-6 h-6 text-primary" />
-              <span className="text-lg font-heading font-bold">HealthGuard</span>
+              <span className="text-lg font-heading font-bold">MedXpert</span>
             </div>
           </div>
           <div className="flex items-center gap-3">

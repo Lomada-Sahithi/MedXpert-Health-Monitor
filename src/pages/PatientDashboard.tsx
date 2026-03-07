@@ -31,6 +31,7 @@ type WaterIntake = {
 const PatientDashboard: React.FC = () => {
   const { profile, patientRecord } = useAuth();
   const [medications, setMedications] = useState<Medication[]>([]);
+  const [takenMedIds, setTakenMedIds] = useState<Set<string>>(new Set());
   const [waterIntake, setWaterIntake] = useState<WaterIntake | null>(null);
   const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
   const [emergencyDialogOpen, setEmergencyDialogOpen] = useState(false);
@@ -44,15 +45,22 @@ const PatientDashboard: React.FC = () => {
   const fetchData = useCallback(async () => {
     if (!patientRecord) return;
 
-    const [medsRes, waterRes, apptsRes] = await Promise.all([
+    const [medsRes, waterRes, apptsRes, logsRes] = await Promise.all([
       supabase.from('medications').select('*').eq('patient_id', patientRecord.id).eq('active', true),
       supabase.from('water_intake').select('*').eq('patient_id', patientRecord.id).eq('date', today).maybeSingle(),
       supabase.from('appointments').select('*').eq('patient_id', patientRecord.id).gte('date', today).order('date').limit(5),
+      supabase.from('medication_logs').select('medication_id')
+        .eq('patient_id', patientRecord.id).eq('status', 'taken')
+        .gte('scheduled_time', `${today}T00:00:00`).lte('scheduled_time', `${today}T23:59:59`),
     ]);
 
     setMedications((medsRes.data as Medication[]) || []);
     setWaterIntake(waterRes.data as WaterIntake | null);
     setUpcomingAppointments(apptsRes.data || []);
+
+    const taken = new Set<string>();
+    logsRes.data?.forEach((log: any) => taken.add(log.medication_id));
+    setTakenMedIds(taken);
   }, [patientRecord, today]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -84,7 +92,7 @@ const PatientDashboard: React.FC = () => {
     fetchData();
   };
 
-  const markMedicationTaken = async (medId: string) => {
+  const markMedicationTaken = async (medId: string, medName: string) => {
     if (!patientRecord) return;
     await supabase.from('medication_logs').insert({
       medication_id: medId,
@@ -93,7 +101,16 @@ const PatientDashboard: React.FC = () => {
       taken_time: new Date().toISOString(),
       status: 'taken',
     });
-    toast.success('Medication marked as taken ✓');
+    setTakenMedIds(prev => new Set(prev).add(medId));
+
+    // Notify caregiver
+    try {
+      await supabase.functions.invoke('send-notification', {
+        body: { patient_id: patientRecord.id, patient_name: profile?.name || patientRecord.name, type: 'medication_taken', medication_name: medName },
+      });
+    } catch (err) { console.error('Notification error:', err); }
+
+    toast.success(`${medName} marked as taken ✓`);
   };
 
   const handleEmergency = async () => {
@@ -180,17 +197,26 @@ const PatientDashboard: React.FC = () => {
               <p className="text-muted-foreground text-sm">No medications scheduled</p>
             ) : (
               <div className="space-y-3">
-                {medications.map(med => (
-                  <div key={med.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                    <div>
-                      <p className="font-medium">{med.name} <span className="text-muted-foreground">{med.dosage}</span></p>
-                      <p className="text-xs text-muted-foreground">{med.times_array?.join(', ')}</p>
+                {medications.map(med => {
+                  const isTaken = takenMedIds.has(med.id);
+                  return (
+                    <div key={med.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div>
+                        <p className="font-medium">{med.name} <span className="text-muted-foreground">{med.dosage}</span></p>
+                        <p className="text-xs text-muted-foreground">{med.times_array?.join(', ')}</p>
+                      </div>
+                      <Button
+                        variant={isTaken ? 'outline' : 'default'}
+                        size="sm"
+                        disabled={isTaken}
+                        onClick={() => markMedicationTaken(med.id, med.name)}
+                        className={isTaken ? 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900/30 dark:text-green-400 cursor-not-allowed' : ''}
+                      >
+                        <Check className="w-4 h-4 mr-1" /> {isTaken ? 'Taken ✓' : 'Taken'}
+                      </Button>
                     </div>
-                    <Button variant="success" size="sm" onClick={() => markMedicationTaken(med.id)}>
-                      <Check className="w-4 h-4 mr-1" /> Taken
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>

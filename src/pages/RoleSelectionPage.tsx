@@ -64,7 +64,7 @@ const RoleSelectionPage: React.FC = () => {
         <div className="w-full max-w-lg animate-fade-in">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-heading font-bold text-foreground">Choose Your Role</h1>
-            <p className="text-muted-foreground mt-2">How will you use HealthGuard?</p>
+            <p className="text-muted-foreground mt-2">How will you use MedXpert?</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card className="card-elevated cursor-pointer hover:border-primary transition-colors" onClick={() => handleRoleSelect('caregiver')}>
