@@ -121,8 +121,17 @@ const PatientDashboard: React.FC = () => {
 
       if (error) throw error;
 
-      const mapsLink = lat && lng ? `https://maps.google.com/?q=${lat},${lng}` : 'Location unavailable';
-      console.log(`🚨 EMERGENCY ALERT from ${profile?.name}. Location: ${mapsLink}`);
+      // Call edge function to notify caregiver via SMS, call, and in-app notification
+      const { error: fnError } = await supabase.functions.invoke('emergency-alert', {
+        body: {
+          patient_id: patientRecord.id,
+          patient_name: profile?.name || patientRecord.name,
+          location_lat: lat,
+          location_lng: lng,
+        },
+      });
+
+      if (fnError) console.error('Edge function error:', fnError);
 
       toast.success('Emergency alert sent to your caregiver!');
       setEmergencyDialogOpen(false);

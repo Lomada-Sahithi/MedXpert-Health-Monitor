@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { useNotificationAlerts } from "@/hooks/useNotificationAlerts";
 import AuthPage from "./pages/AuthPage";
 import RoleSelectionPage from "./pages/RoleSelectionPage";
 import CaregiverDashboard from "./pages/CaregiverDashboard";
@@ -20,6 +21,7 @@ const queryClient = new QueryClient();
 
 const AppRoutes = () => {
   const { user, profile, loading } = useAuth();
+  useNotificationAlerts();
 
   if (loading) {
     return (
