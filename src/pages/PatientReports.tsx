@@ -5,7 +5,7 @@ import AppLayout from '@/components/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Home, Pill, Calendar, FileText, Droplets, Bell, Download } from 'lucide-react';
+import { Home, Pill, Calendar, FileText, Droplets, Bell, Download, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 
@@ -64,9 +64,26 @@ const PatientReports: React.FC = () => {
                       <span className="text-xs text-muted-foreground">{format(new Date(report.upload_date), 'MMM d, yyyy')}</span>
                     </div>
                   </div>
-                  <Button variant="ghost" size="icon" asChild>
-                    <a href={report.file_url} target="_blank" rel="noopener noreferrer"><Download className="w-4 h-4" /></a>
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button variant="ghost" size="icon" onClick={async () => {
+                      const filePath = report.file_url.split('/medical-reports/')[1];
+                      if (filePath) {
+                        const { data } = await supabase.storage.from('medical-reports').createSignedUrl(filePath, 3600);
+                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                      } else {
+                        window.open(report.file_url, '_blank');
+                      }
+                    }}><Eye className="w-4 h-4" /></Button>
+                    <Button variant="ghost" size="icon" onClick={async () => {
+                      const filePath = report.file_url.split('/medical-reports/')[1];
+                      if (filePath) {
+                        const { data } = await supabase.storage.from('medical-reports').createSignedUrl(filePath, 3600, { download: true });
+                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                      } else {
+                        window.open(report.file_url, '_blank');
+                      }
+                    }}><Download className="w-4 h-4" /></Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
