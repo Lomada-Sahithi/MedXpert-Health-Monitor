@@ -92,7 +92,7 @@ const PatientDashboard: React.FC = () => {
     fetchData();
   };
 
-  const markMedicationTaken = async (medId: string) => {
+  const markMedicationTaken = async (medId: string, medName: string) => {
     if (!patientRecord) return;
     await supabase.from('medication_logs').insert({
       medication_id: medId,
@@ -101,7 +101,16 @@ const PatientDashboard: React.FC = () => {
       taken_time: new Date().toISOString(),
       status: 'taken',
     });
-    toast.success('Medication marked as taken ✓');
+    setTakenMedIds(prev => new Set(prev).add(medId));
+
+    // Notify caregiver
+    try {
+      await supabase.functions.invoke('send-notification', {
+        body: { patient_id: patientRecord.id, patient_name: profile?.name || patientRecord.name, type: 'medication_taken', medication_name: medName },
+      });
+    } catch (err) { console.error('Notification error:', err); }
+
+    toast.success(`${medName} marked as taken ✓`);
   };
 
   const handleEmergency = async () => {
