@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Users, Pill, Calendar, AlertTriangle, Plus, Search } from 'lucide-react';
+import { Users, Pill, Calendar, AlertTriangle, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -118,7 +118,7 @@ const CaregiverDashboard: React.FC = () => {
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <Users className="w-12 h-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-heading font-semibold">No Patients Yet</h3>
-              <p className="text-muted-foreground mt-2 max-w-sm">Add a patient by entering their unique Patient ID. Patients can find their ID on their dashboard.</p>
+              <p className="text-muted-foreground mt-2 max-w-sm">Add a patient by entering their registered email address.</p>
             </CardContent>
           </Card>
         ) : (
