@@ -31,7 +31,7 @@ const AuthPage: React.FC = () => {
     setLoading(true);
     const { error } = await signUp(email, password);
     if (error) toast.error(error.message);
-    else toast.success('Account created! Please check your email to verify.');
+    else toast.success('Account created successfully!');
     setLoading(false);
   };
 
