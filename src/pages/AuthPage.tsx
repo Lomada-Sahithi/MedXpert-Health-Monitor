@@ -77,7 +77,7 @@ const AuthPage: React.FC = () => {
               <form onSubmit={handleSignUp}>
                 <CardHeader>
                   <CardTitle className="font-heading">Create Account</CardTitle>
-                  <CardDescription>Get started with HealthGuard</CardDescription>
+                  <CardDescription>Get started with MedXpert</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
