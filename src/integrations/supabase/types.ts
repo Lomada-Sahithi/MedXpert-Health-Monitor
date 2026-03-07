@@ -361,6 +361,10 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      link_patient_by_email: {
+        Args: { _caregiver_id: string; _patient_email: string }
+        Returns: Json
+      }
     }
     Enums: {
       app_role: "caregiver" | "patient"
