@@ -450,6 +450,53 @@ const PatientManagement: React.FC = () => {
               </CardContent>
             </Card>
           </TabsContent>
+
+          {/* WATER TAB */}
+          <TabsContent value="water" className="space-y-4">
+            <h2 className="text-lg font-heading font-semibold">Water Intake (This Week)</h2>
+            {(() => {
+              const chartData = Array.from({ length: 7 }, (_, i) => {
+                const date = format(subDays(new Date(), 6 - i), 'yyyy-MM-dd');
+                const dayData = waterHistory.find((w: any) => w.date === date);
+                return {
+                  day: format(subDays(new Date(), 6 - i), 'EEE'),
+                  glasses: dayData?.glasses_count || 0,
+                  goal: dayData?.daily_goal || 8,
+                };
+              });
+              const todayData = chartData[6];
+              const defaultGoal = waterHistory.length > 0 ? waterHistory[0].daily_goal : 8;
+
+              return (
+                <>
+                  <Card className="card-elevated">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Today</p>
+                          <p className="text-2xl font-bold">{todayData.glasses} <span className="text-sm font-normal text-muted-foreground">/ {todayData.goal} glasses</span></p>
+                        </div>
+                        <Droplets className="w-8 h-8 text-primary" />
+                      </div>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                          <XAxis dataKey="day" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                          <YAxis tick={{ fontSize: 12 }} className="fill-muted-foreground" allowDecimals={false} />
+                          <Tooltip
+                            contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }}
+                            formatter={(value: number) => [`${value} glasses`, 'Intake']}
+                          />
+                          <ReferenceLine y={defaultGoal} stroke="hsl(var(--success))" strokeDasharray="4 4" label={{ value: `Goal: ${defaultGoal}`, position: 'right', fontSize: 11, fill: 'hsl(var(--success))' }} />
+                          <Bar dataKey="glasses" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </>
+              );
+            })()}
+          </TabsContent>
         </Tabs>
       </div>
     </AppLayout>
