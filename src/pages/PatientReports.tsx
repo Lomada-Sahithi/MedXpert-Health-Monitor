@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Home, Pill, Calendar, FileText, Droplets, Bell, Download, Eye } from 'lucide-react';
+import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 
@@ -66,22 +67,16 @@ const PatientReports: React.FC = () => {
                   </div>
                   <div className="flex gap-1">
                     <Button variant="ghost" size="icon" onClick={async () => {
-                      const filePath = report.file_url.split('/medical-reports/')[1];
-                      if (filePath) {
-                        const { data } = await supabase.storage.from('medical-reports').createSignedUrl(filePath, 3600);
-                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                      } else {
-                        window.open(report.file_url, '_blank');
-                      }
+                      const filePath = report.file_url.replace('medical-reports/', '');
+                      const { data } = await supabase.storage.from('medical-reports').createSignedUrl(filePath, 3600);
+                      if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                      else toast.error('Could not generate view link');
                     }}><Eye className="w-4 h-4" /></Button>
                     <Button variant="ghost" size="icon" onClick={async () => {
-                      const filePath = report.file_url.split('/medical-reports/')[1];
-                      if (filePath) {
-                        const { data } = await supabase.storage.from('medical-reports').createSignedUrl(filePath, 3600, { download: true });
-                        if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                      } else {
-                        window.open(report.file_url, '_blank');
-                      }
+                      const filePath = report.file_url.replace('medical-reports/', '');
+                      const { data } = await supabase.storage.from('medical-reports').createSignedUrl(filePath, 3600, { download: true });
+                      if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                      else toast.error('Could not generate download link');
                     }}><Download className="w-4 h-4" /></Button>
                   </div>
                 </CardContent>

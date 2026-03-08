@@ -177,14 +177,13 @@ const PatientManagement: React.FC = () => {
     const filePath = `${patient.user_id}/${Date.now()}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage.from('medical-reports').upload(filePath, file);
-    if (uploadError) { toast.error('Upload failed'); return; }
+    if (uploadError) { toast.error('Upload failed: ' + uploadError.message); return; }
 
-    const { data: urlData } = supabase.storage.from('medical-reports').getPublicUrl(filePath);
-
+    // Store the file path (not public URL) since bucket is private - use signed URLs for access
     const { error } = await supabase.from('medical_reports').insert({
       patient_id: patientId,
       title: file.name,
-      file_url: urlData.publicUrl,
+      file_url: `medical-reports/${filePath}`,
       file_type: fileExt || 'unknown',
       category: 'other',
     });
@@ -410,24 +409,16 @@ const PatientManagement: React.FC = () => {
                         </div>
                         <div className="flex gap-1">
                           <Button variant="ghost" size="icon" onClick={async () => {
-                            const filePath = report.file_url.split('/medical-reports/')[1];
-                            if (filePath) {
-                              const { data } = await supabase.storage.from('medical-reports').createSignedUrl(filePath, 3600);
-                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                              else toast.error('Could not generate view link');
-                            } else {
-                              window.open(report.file_url, '_blank');
-                            }
+                            const filePath = report.file_url.replace('medical-reports/', '');
+                            const { data } = await supabase.storage.from('medical-reports').createSignedUrl(filePath, 3600);
+                            if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                            else toast.error('Could not generate view link');
                           }}><Eye className="w-4 h-4" /></Button>
                           <Button variant="ghost" size="icon" onClick={async () => {
-                            const filePath = report.file_url.split('/medical-reports/')[1];
-                            if (filePath) {
-                              const { data } = await supabase.storage.from('medical-reports').createSignedUrl(filePath, 3600, { download: true });
-                              if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                              else toast.error('Could not generate download link');
-                            } else {
-                              window.open(report.file_url, '_blank');
-                            }
+                            const filePath = report.file_url.replace('medical-reports/', '');
+                            const { data } = await supabase.storage.from('medical-reports').createSignedUrl(filePath, 3600, { download: true });
+                            if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                            else toast.error('Could not generate download link');
                           }}><Download className="w-4 h-4" /></Button>
                           <Button variant="ghost" size="icon" onClick={() => deleteReport(report.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>
                         </div>
