@@ -102,7 +102,7 @@ export const useNotificationAlerts = () => {
     }
   }, [patientRecord, profile]);
 
-  // Realtime notifications
+  // Realtime notifications (both patients and caregivers)
   useEffect(() => {
     if (!user) return;
     const channel = supabase.channel('user-notifications')
@@ -110,9 +110,11 @@ export const useNotificationAlerts = () => {
         (payload: any) => {
           const notif = payload.new;
           const isEmergency = notif.type === 'emergency';
-          playSound(isEmergency ? EMERGENCY_SOUND_URL : PLEASANT_CHIME_URL);
+          const isAppointment = notif.type === 'appointment';
+          const sound = isEmergency ? EMERGENCY_SOUND_URL : isAppointment ? PLEASANT_CHIME_URL : MEDICATION_SOUND_URL;
+          playSound(sound);
           showBrowserNotification(notif.title, notif.message, `notif-${notif.id}`);
-          toast[isEmergency ? 'error' : 'info'](notif.title, { description: notif.message, duration: isEmergency ? 15000 : 5000 });
+          toast[isEmergency ? 'error' : 'info'](notif.title, { description: notif.message, duration: isEmergency ? 15000 : 8000 });
         })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
