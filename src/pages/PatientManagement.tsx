@@ -12,9 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ArrowLeft, Pill, Calendar, FileText, Bell, Plus, Trash2, Edit, Users, AlertTriangle, Download, Eye } from 'lucide-react';
+import { ArrowLeft, Pill, Calendar, FileText, Bell, Plus, Trash2, Edit, Users, AlertTriangle, Download, Eye, Droplets } from 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 const caregiverNavItems = [
   { label: 'Dashboard', path: '/caregiver', icon: <Users className="w-4 h-4" /> },

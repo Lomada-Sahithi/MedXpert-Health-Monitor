@@ -200,6 +200,24 @@ const PatientDashboard: React.FC = () => {
           </div>
         </div>
 
+        {/* Caregiver Info */}
+        {caregiverInfo && (
+          <Card className="card-elevated">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Your Caregiver</p>
+                <p className="font-semibold">{caregiverInfo.name}</p>
+                {caregiverInfo.phone && (
+                  <p className="text-sm text-muted-foreground">{caregiverInfo.phone}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Today's Medications */}
         <Card className="card-elevated">
           <CardHeader className="pb-3">

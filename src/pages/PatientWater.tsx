@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Home, Pill, Calendar, FileText, Droplets, Bell, Plus, Minus } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, subDays } from 'date-fns';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 const patientNavItems = [
   { label: 'Home', path: '/patient', icon: <Home className="w-4 h-4" /> },
@@ -77,6 +78,17 @@ const PatientWater: React.FC = () => {
     else break;
   }
 
+  // Build chart data for all 7 days
+  const chartData = Array.from({ length: 7 }, (_, i) => {
+    const date = format(subDays(new Date(), 6 - i), 'yyyy-MM-dd');
+    const dayData = weekHistory.find(w => w.date === date);
+    return {
+      day: format(subDays(new Date(), 6 - i), 'EEE'),
+      glasses: dayData?.glasses_count || 0,
+      goal: dayData?.daily_goal || 8,
+    };
+  });
+
   return (
     <AppLayout navItems={patientNavItems}>
       <div className="space-y-6 animate-fade-in">
@@ -119,34 +131,25 @@ const PatientWater: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Weekly History */}
+        {/* Weekly History Bar Chart */}
         <Card className="card-elevated">
           <CardHeader>
             <CardTitle className="font-heading text-lg">This Week</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-end justify-between gap-2 h-32">
-              {Array.from({ length: 7 }, (_, i) => {
-                const date = format(subDays(new Date(), 6 - i), 'yyyy-MM-dd');
-                const dayData = weekHistory.find(w => w.date === date);
-                const count = dayData?.glasses_count || 0;
-                const dayGoal = dayData?.daily_goal || 8;
-                const barHeight = Math.max((count / dayGoal) * 100, 4);
-                const metGoal = count >= dayGoal;
-
-                return (
-                  <div key={date} className="flex flex-col items-center flex-1">
-                    <div className="w-full max-w-8 rounded-t-md transition-all" style={{
-                      height: `${barHeight}%`,
-                      backgroundColor: metGoal ? 'hsl(var(--success))' : 'hsl(var(--primary))',
-                      opacity: metGoal ? 1 : 0.6,
-                    }} />
-                    <span className="text-xs text-muted-foreground mt-1">{format(subDays(new Date(), 6 - i), 'EEE')}</span>
-                    <span className="text-xs font-medium">{count}</span>
-                  </div>
-                );
-              })}
-            </div>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="day" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                <YAxis tick={{ fontSize: 12 }} className="fill-muted-foreground" allowDecimals={false} />
+                <Tooltip
+                  contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }}
+                  formatter={(value: number) => [`${value} glasses`, 'Intake']}
+                />
+                <ReferenceLine y={goal} stroke="hsl(var(--success))" strokeDasharray="4 4" label={{ value: `Goal: ${goal}`, position: 'right', fontSize: 11, fill: 'hsl(var(--success))' }} />
+                <Bar dataKey="glasses" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
