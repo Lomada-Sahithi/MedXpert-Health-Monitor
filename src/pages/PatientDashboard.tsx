@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Home, Pill, Calendar, FileText, Droplets, Bell, AlertTriangle, Check, Plus, Copy } from 'lucide-react';
+import { Home, Pill, Calendar, FileText, Droplets, Bell, AlertTriangle, Check, Plus, Copy, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
@@ -28,6 +28,11 @@ type WaterIntake = {
   id: string; glasses_count: number; daily_goal: number; date: string;
 };
 
+type CaregiverInfo = {
+  name: string;
+  phone: string | null;
+};
+
 const PatientDashboard: React.FC = () => {
   const { profile, patientRecord } = useAuth();
   const [medications, setMedications] = useState<Medication[]>([]);
@@ -37,6 +42,7 @@ const PatientDashboard: React.FC = () => {
   const [emergencyDialogOpen, setEmergencyDialogOpen] = useState(false);
   const [sendingAlert, setSendingAlert] = useState(false);
   const [celebrateWater, setCelebrateWater] = useState(false);
+  const [caregiverInfo, setCaregiverInfo] = useState<CaregiverInfo | null>(null);
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const hour = new Date().getHours();
@@ -61,6 +67,16 @@ const PatientDashboard: React.FC = () => {
     const taken = new Set<string>();
     logsRes.data?.forEach((log: any) => taken.add(log.medication_id));
     setTakenMedIds(taken);
+
+    // Fetch caregiver info
+    if (patientRecord.caregiver_id) {
+      const { data: cgProfile } = await supabase
+        .from('profiles')
+        .select('name, phone')
+        .eq('user_id', patientRecord.caregiver_id)
+        .maybeSingle();
+      setCaregiverInfo(cgProfile as CaregiverInfo | null);
+    }
   }, [patientRecord, today]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -183,6 +199,24 @@ const PatientDashboard: React.FC = () => {
             </Badge>
           </div>
         </div>
+
+        {/* Caregiver Info */}
+        {caregiverInfo && (
+          <Card className="card-elevated">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                <User className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Your Caregiver</p>
+                <p className="font-semibold">{caregiverInfo.name}</p>
+                {caregiverInfo.phone && (
+                  <p className="text-sm text-muted-foreground">{caregiverInfo.phone}</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Today's Medications */}
         <Card className="card-elevated">

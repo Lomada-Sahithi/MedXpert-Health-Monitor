@@ -12,9 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ArrowLeft, Pill, Calendar, FileText, Bell, Plus, Trash2, Edit, Users, AlertTriangle, Download, Eye } from 'lucide-react';
+import { ArrowLeft, Pill, Calendar, FileText, Bell, Plus, Trash2, Edit, Users, AlertTriangle, Download, Eye, Droplets } from 'lucide-react';
 import { toast } from 'sonner';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 const caregiverNavItems = [
   { label: 'Dashboard', path: '/caregiver', icon: <Users className="w-4 h-4" /> },
@@ -46,6 +47,7 @@ const PatientManagement: React.FC = () => {
   const [medications, setMedications] = useState<Medication[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
+  const [waterHistory, setWaterHistory] = useState<any[]>([]);
 
   // Medication form
   const [medDialog, setMedDialog] = useState(false);
@@ -80,16 +82,20 @@ const PatientManagement: React.FC = () => {
 
   const fetchAll = async () => {
     if (!patientId) return;
-    const [patientRes, medsRes, apptsRes, reportsRes] = await Promise.all([
+    const [patientRes, medsRes, apptsRes, reportsRes, waterRes] = await Promise.all([
       supabase.from('patients').select('*').eq('id', patientId).single(),
       supabase.from('medications').select('*').eq('patient_id', patientId).order('created_at', { ascending: false }),
       supabase.from('appointments').select('*').eq('patient_id', patientId).order('date', { ascending: true }),
       supabase.from('medical_reports').select('*').eq('patient_id', patientId).order('upload_date', { ascending: false }),
+      supabase.from('water_intake').select('*').eq('patient_id', patientId)
+        .gte('date', format(subDays(new Date(), 6), 'yyyy-MM-dd'))
+        .order('date', { ascending: true }),
     ]);
     setPatient(patientRes.data);
     setMedications((medsRes.data as Medication[]) || []);
     setAppointments((apptsRes.data as Appointment[]) || []);
     setReports((reportsRes.data as Report[]) || []);
+    setWaterHistory(waterRes.data || []);
   };
 
   const addMedication = async () => {
@@ -239,10 +245,11 @@ const PatientManagement: React.FC = () => {
         </div>
 
         <Tabs defaultValue="medications" className="space-y-4">
-          <TabsList className="grid grid-cols-4 w-full max-w-lg">
+          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
             <TabsTrigger value="medications" className="text-xs sm:text-sm"><Pill className="w-4 h-4 mr-1 hidden sm:inline" />Meds</TabsTrigger>
             <TabsTrigger value="appointments" className="text-xs sm:text-sm"><Calendar className="w-4 h-4 mr-1 hidden sm:inline" />Appts</TabsTrigger>
             <TabsTrigger value="reports" className="text-xs sm:text-sm"><FileText className="w-4 h-4 mr-1 hidden sm:inline" />Reports</TabsTrigger>
+            <TabsTrigger value="water" className="text-xs sm:text-sm"><Droplets className="w-4 h-4 mr-1 hidden sm:inline" />Water</TabsTrigger>
             <TabsTrigger value="notify" className="text-xs sm:text-sm"><Bell className="w-4 h-4 mr-1 hidden sm:inline" />Notify</TabsTrigger>
           </TabsList>
 
@@ -442,6 +449,53 @@ const PatientManagement: React.FC = () => {
                 </Button>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* WATER TAB */}
+          <TabsContent value="water" className="space-y-4">
+            <h2 className="text-lg font-heading font-semibold">Water Intake (This Week)</h2>
+            {(() => {
+              const chartData = Array.from({ length: 7 }, (_, i) => {
+                const date = format(subDays(new Date(), 6 - i), 'yyyy-MM-dd');
+                const dayData = waterHistory.find((w: any) => w.date === date);
+                return {
+                  day: format(subDays(new Date(), 6 - i), 'EEE'),
+                  glasses: dayData?.glasses_count || 0,
+                  goal: dayData?.daily_goal || 8,
+                };
+              });
+              const todayData = chartData[6];
+              const defaultGoal = waterHistory.length > 0 ? waterHistory[0].daily_goal : 8;
+
+              return (
+                <>
+                  <Card className="card-elevated">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <p className="text-sm text-muted-foreground">Today</p>
+                          <p className="text-2xl font-bold">{todayData.glasses} <span className="text-sm font-normal text-muted-foreground">/ {todayData.goal} glasses</span></p>
+                        </div>
+                        <Droplets className="w-8 h-8 text-primary" />
+                      </div>
+                      <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={chartData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                          <XAxis dataKey="day" tick={{ fontSize: 12 }} className="fill-muted-foreground" />
+                          <YAxis tick={{ fontSize: 12 }} className="fill-muted-foreground" allowDecimals={false} />
+                          <Tooltip
+                            contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', background: 'hsl(var(--card))' }}
+                            formatter={(value: number) => [`${value} glasses`, 'Intake']}
+                          />
+                          <ReferenceLine y={defaultGoal} stroke="hsl(var(--success))" strokeDasharray="4 4" label={{ value: `Goal: ${defaultGoal}`, position: 'right', fontSize: 11, fill: 'hsl(var(--success))' }} />
+                          <Bar dataKey="glasses" radius={[4, 4, 0, 0]} fill="hsl(var(--primary))" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </>
+              );
+            })()}
           </TabsContent>
         </Tabs>
       </div>
