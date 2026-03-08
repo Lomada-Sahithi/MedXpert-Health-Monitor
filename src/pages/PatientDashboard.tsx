@@ -67,6 +67,16 @@ const PatientDashboard: React.FC = () => {
     const taken = new Set<string>();
     logsRes.data?.forEach((log: any) => taken.add(log.medication_id));
     setTakenMedIds(taken);
+
+    // Fetch caregiver info
+    if (patientRecord.caregiver_id) {
+      const { data: cgProfile } = await supabase
+        .from('profiles')
+        .select('name, phone')
+        .eq('user_id', patientRecord.caregiver_id)
+        .maybeSingle();
+      setCaregiverInfo(cgProfile as CaregiverInfo | null);
+    }
   }, [patientRecord, today]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
