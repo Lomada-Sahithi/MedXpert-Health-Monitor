@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Home, Pill, Calendar, FileText, Droplets, Bell, AlertTriangle, Check, Plus, Copy } from 'lucide-react';
+import { Home, Pill, Calendar, FileText, Droplets, Bell, AlertTriangle, Check, Plus, Copy, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 
