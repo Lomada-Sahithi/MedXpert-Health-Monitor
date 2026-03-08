@@ -28,6 +28,11 @@ type WaterIntake = {
   id: string; glasses_count: number; daily_goal: number; date: string;
 };
 
+type CaregiverInfo = {
+  name: string;
+  phone: string | null;
+};
+
 const PatientDashboard: React.FC = () => {
   const { profile, patientRecord } = useAuth();
   const [medications, setMedications] = useState<Medication[]>([]);
@@ -37,6 +42,7 @@ const PatientDashboard: React.FC = () => {
   const [emergencyDialogOpen, setEmergencyDialogOpen] = useState(false);
   const [sendingAlert, setSendingAlert] = useState(false);
   const [celebrateWater, setCelebrateWater] = useState(false);
+  const [caregiverInfo, setCaregiverInfo] = useState<CaregiverInfo | null>(null);
 
   const today = format(new Date(), 'yyyy-MM-dd');
   const hour = new Date().getHours();
