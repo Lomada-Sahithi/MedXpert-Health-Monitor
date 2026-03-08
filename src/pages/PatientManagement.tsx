@@ -82,16 +82,20 @@ const PatientManagement: React.FC = () => {
 
   const fetchAll = async () => {
     if (!patientId) return;
-    const [patientRes, medsRes, apptsRes, reportsRes] = await Promise.all([
+    const [patientRes, medsRes, apptsRes, reportsRes, waterRes] = await Promise.all([
       supabase.from('patients').select('*').eq('id', patientId).single(),
       supabase.from('medications').select('*').eq('patient_id', patientId).order('created_at', { ascending: false }),
       supabase.from('appointments').select('*').eq('patient_id', patientId).order('date', { ascending: true }),
       supabase.from('medical_reports').select('*').eq('patient_id', patientId).order('upload_date', { ascending: false }),
+      supabase.from('water_intake').select('*').eq('patient_id', patientId)
+        .gte('date', format(subDays(new Date(), 6), 'yyyy-MM-dd'))
+        .order('date', { ascending: true }),
     ]);
     setPatient(patientRes.data);
     setMedications((medsRes.data as Medication[]) || []);
     setAppointments((apptsRes.data as Appointment[]) || []);
     setReports((reportsRes.data as Report[]) || []);
+    setWaterHistory(waterRes.data || []);
   };
 
   const addMedication = async () => {
