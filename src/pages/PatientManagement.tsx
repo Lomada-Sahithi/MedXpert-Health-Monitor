@@ -245,10 +245,11 @@ const PatientManagement: React.FC = () => {
         </div>
 
         <Tabs defaultValue="medications" className="space-y-4">
-          <TabsList className="grid grid-cols-4 w-full max-w-lg">
+          <TabsList className="grid grid-cols-5 w-full max-w-2xl">
             <TabsTrigger value="medications" className="text-xs sm:text-sm"><Pill className="w-4 h-4 mr-1 hidden sm:inline" />Meds</TabsTrigger>
             <TabsTrigger value="appointments" className="text-xs sm:text-sm"><Calendar className="w-4 h-4 mr-1 hidden sm:inline" />Appts</TabsTrigger>
             <TabsTrigger value="reports" className="text-xs sm:text-sm"><FileText className="w-4 h-4 mr-1 hidden sm:inline" />Reports</TabsTrigger>
+            <TabsTrigger value="water" className="text-xs sm:text-sm"><Droplets className="w-4 h-4 mr-1 hidden sm:inline" />Water</TabsTrigger>
             <TabsTrigger value="notify" className="text-xs sm:text-sm"><Bell className="w-4 h-4 mr-1 hidden sm:inline" />Notify</TabsTrigger>
           </TabsList>
 
