@@ -177,14 +177,13 @@ const PatientManagement: React.FC = () => {
     const filePath = `${patient.user_id}/${Date.now()}.${fileExt}`;
 
     const { error: uploadError } = await supabase.storage.from('medical-reports').upload(filePath, file);
-    if (uploadError) { toast.error('Upload failed'); return; }
+    if (uploadError) { toast.error('Upload failed: ' + uploadError.message); return; }
 
-    const { data: urlData } = supabase.storage.from('medical-reports').getPublicUrl(filePath);
-
+    // Store the file path (not public URL) since bucket is private - use signed URLs for access
     const { error } = await supabase.from('medical_reports').insert({
       patient_id: patientId,
       title: file.name,
-      file_url: urlData.publicUrl,
+      file_url: `medical-reports/${filePath}`,
       file_type: fileExt || 'unknown',
       category: 'other',
     });
