@@ -47,6 +47,7 @@ const PatientManagement: React.FC = () => {
   const [medications, setMedications] = useState<Medication[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
+  const [waterHistory, setWaterHistory] = useState<any[]>([]);
 
   // Medication form
   const [medDialog, setMedDialog] = useState(false);
